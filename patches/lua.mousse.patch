@@ -1,0 +1,82 @@
+diff -Nur ./lua-5.3.4/Makefile ./lua-5.3.4.mousse/Makefile
+--- ./lua-5.3.4/Makefile	2016-12-20 08:26:08.000000000 -0800
++++ ./lua-5.3.4.mousse/Makefile	2018-10-24 19:17:35.580506270 -0700
+@@ -10,7 +10,10 @@
+ # so take care if INSTALL_TOP is not an absolute path. See the local target.
+ # You may want to make INSTALL_LMOD and INSTALL_CMOD consistent with
+ # LUA_ROOT, LUA_LDIR, and LUA_CDIR in luaconf.h.
+-INSTALL_TOP= /usr/local
++#Yingtong start
++#INSTALL_TOP= /usr/local
++INSTALL_TOP= $(SYSROOT)/usr
++#Yingtong end
+ INSTALL_BIN= $(INSTALL_TOP)/bin
+ INSTALL_INC= $(INSTALL_TOP)/include
+ INSTALL_LIB= $(INSTALL_TOP)/lib
+diff -Nur ./lua-5.3.4/src/luaconf.h ./lua-5.3.4.mousse/src/luaconf.h
+--- ./lua-5.3.4/src/luaconf.h	2016-12-22 05:08:50.000000000 -0800
++++ ./lua-5.3.4.mousse/src/luaconf.h	2018-10-24 19:17:35.592506272 -0700
+@@ -61,14 +61,14 @@
+ #if defined(LUA_USE_LINUX)
+ #define LUA_USE_POSIX
+ #define LUA_USE_DLOPEN		/* needs an extra library: -ldl */
+-#define LUA_USE_READLINE	/* needs some extra libraries */
++//#define LUA_USE_READLINE	/* needs some extra libraries */
+ #endif
+ 
+ 
+ #if defined(LUA_USE_MACOSX)
+ #define LUA_USE_POSIX
+ #define LUA_USE_DLOPEN		/* MacOS does not need -ldl */
+-#define LUA_USE_READLINE	/* needs an extra library: -lreadline */
++//#define LUA_USE_READLINE	/* needs an extra library: -lreadline */
+ #endif
+ 
+ 
+diff -Nur ./lua-5.3.4/src/Makefile ./lua-5.3.4.mousse/src/Makefile
+--- ./lua-5.3.4/src/Makefile	2015-05-27 04:10:11.000000000 -0700
++++ ./lua-5.3.4.mousse/src/Makefile	2018-10-24 19:18:37.560517947 -0700
+@@ -5,14 +5,19 @@
+ 
+ # Your platform. See PLATS for possible values.
+ PLAT= none
+-
+-CC= gcc -std=gnu99
++#Yingtong start
++#CC= gcc -std=gnu99
++CC = arm-linux-androideabi-gcc -std=gnu99
++#Yingtong end
+ CFLAGS= -O2 -Wall -Wextra -DLUA_COMPAT_5_2 $(SYSCFLAGS) $(MYCFLAGS)
+ LDFLAGS= $(SYSLDFLAGS) $(MYLDFLAGS)
+ LIBS= -lm $(SYSLIBS) $(MYLIBS)
+-
+-AR= ar rcu
+-RANLIB= ranlib
++#Yingtong start
++#AR= ar rcu
++AR= arm-linux-androideabi-ar rcu
++#RANLIB= ranlib
++RANLIB= arm-linux-androideabi-ranlib
++#Yingtong end
+ RM= rm -f
+ 
+ SYSCFLAGS=
+@@ -102,15 +107,15 @@
+ 
+ 
+ freebsd:
+-	$(MAKE) $(ALL) SYSCFLAGS="-DLUA_USE_LINUX" SYSLIBS="-Wl,-E -lreadline"
++	$(MAKE) $(ALL) SYSCFLAGS="-DLUA_USE_LINUX" SYSLIBS="-Wl,-E "
+ 
+ generic: $(ALL)
+ 
+ linux:
+-	$(MAKE) $(ALL) SYSCFLAGS="-DLUA_USE_LINUX" SYSLIBS="-Wl,-E -ldl -lreadline"
++	$(MAKE) $(ALL) SYSCFLAGS="-DLUA_USE_LINUX" SYSLIBS="-Wl,-E -ldl "
+ 
+ macosx:
+-	$(MAKE) $(ALL) SYSCFLAGS="-DLUA_USE_MACOSX" SYSLIBS="-lreadline" CC=cc
++	$(MAKE) $(ALL) SYSCFLAGS="-DLUA_USE_MACOSX" SYSLIBS="" CC=cc
+ 
+ mingw:
+ 	$(MAKE) "LUA_A=lua53.dll" "LUA_T=lua.exe" \

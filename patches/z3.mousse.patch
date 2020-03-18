@@ -1,0 +1,62 @@
+Binary files ./z3-z3-4.6.0.old/scripts/mk_exception.pyc and ./z3-z3-4.6.0/scripts/mk_exception.pyc differ
+Binary files ./z3-z3-4.6.0.old/scripts/mk_genfile_common.pyc and ./z3-z3-4.6.0/scripts/mk_genfile_common.pyc differ
+Binary files ./z3-z3-4.6.0.old/scripts/mk_util.pyc and ./z3-z3-4.6.0/scripts/mk_util.pyc differ
+diff -Nur ./z3-z3-4.6.0.old/src/muz/spacer/spacer_unsat_core_plugin.cpp ./z3-z3-4.6.0/src/muz/spacer/spacer_unsat_core_plugin.cpp
+--- ./z3-z3-4.6.0.old/src/muz/spacer/spacer_unsat_core_plugin.cpp	2017-12-18 06:18:30.000000000 -0800
++++ ./z3-z3-4.6.0/src/muz/spacer/spacer_unsat_core_plugin.cpp	2020-03-02 13:31:26.026340127 -0800
+@@ -30,7 +30,15 @@
+ #include "muz/spacer/spacer_matrix.h"
+ #include "muz/spacer/spacer_unsat_core_plugin.h"
+ #include "muz/spacer/spacer_unsat_core_learner.h"
+-
++//Yingtong start
++template <typename T>
++std::string to_string(T value)
++{
++	std::ostringstream os ;
++	os << value ;
++	return os.str() ;
++}
++//Yingtong end
+ namespace spacer
+ {
+ 
+@@ -503,7 +511,10 @@
+             // add new variables w_in,
+             for (unsigned i=0; i < matrix.num_rows(); ++i)
+             {
+-                std::string name = "w_" + std::to_string(i) + std::to_string(n);
++		//Yingtong start
++                //std::string name = "w_" + std::to_string(i) + std::to_string(n);
++                std::string name = "w_" + to_string(i) + to_string(n);
++		//Yingtong end
+ 
+                 func_decl_ref decl(m);
+                 decl = m.mk_func_decl(symbol(name.c_str()), 0, (sort*const*)0, util.mk_int());
+@@ -513,7 +524,10 @@
+             // we need s_jn
+             for (unsigned j=0; j < matrix.num_cols(); ++j)
+             {
+-                std::string name = "s_" + std::to_string(j) + std::to_string(n);
++		//Yingtong start
++                //std::string name = "s_" + std::to_string(j) + std::to_string(n);
++                std::string name = "s_" + to_string(j) + to_string(n);
++		//Yingtong end
+ 
+                 func_decl_ref decl(m);
+                 decl = m.mk_func_decl(symbol(name.c_str()), 0, (sort*const*)0, util.mk_int());
+diff -Nur ./z3-z3-4.6.0.old/src/util/vector.h ./z3-z3-4.6.0/src/util/vector.h
+--- ./z3-z3-4.6.0.old/src/util/vector.h	2017-12-18 06:18:30.000000000 -0800
++++ ./z3-z3-4.6.0/src/util/vector.h	2018-12-22 10:37:07.740102117 -0800
+@@ -76,7 +76,10 @@
+                 throw default_exception("Overflow encountered when expanding vector");
+             }
+             SZ *mem, *old_mem = reinterpret_cast<SZ*>(m_data) - 2;
+-#if defined(__GNUC__) && !defined(__clang__) && __GNUC__ < 5
++//Yingtong start
++////#if defined(__GNUC__) && !defined(__clang__) && __GNUC__ < 5
++#if 1
++//Yingtong end
+             if (__has_trivial_copy(T)) {
+ #else
+             if (std::is_trivially_copyable<T>::value) {

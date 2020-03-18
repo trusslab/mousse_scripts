@@ -1,0 +1,532 @@
+diff -Naur llvm-3.9.0.src/cmake/modules/CheckAtomic.cmake llvm-3.9.0.src.mousse/cmake/modules/CheckAtomic.cmake
+--- llvm-3.9.0.src/cmake/modules/CheckAtomic.cmake	2020-02-28 13:33:28.171419921 -0800
++++ llvm-3.9.0.src.mousse/cmake/modules/CheckAtomic.cmake	2020-02-28 13:37:21.255576246 -0800
+@@ -40,6 +40,8 @@
+   # First check if atomics work without the library.
+   check_working_cxx_atomics(HAVE_CXX_ATOMICS_WITHOUT_LIB)
+   # If not, check if the library exists, and atomics work with it.
++#Yingtong
++#  set(HAVE_CXX_ATOMICS_WITHOUT_LIB True)
+   if(NOT HAVE_CXX_ATOMICS_WITHOUT_LIB)
+     check_library_exists(atomic __atomic_fetch_add_4 "" HAVE_LIBATOMIC)
+     if( HAVE_LIBATOMIC )
+@@ -60,7 +62,8 @@
+ else()
+   check_working_cxx_atomics64(HAVE_CXX_ATOMICS64_WITHOUT_LIB)
+ endif()
+-
++#Yingtong
++#  set(HAVE_CXX_ATOMICS64_WITHOUT_LIB True)
+ # If not, check if the library exists, and atomics work with it.
+ if(NOT HAVE_CXX_ATOMICS64_WITHOUT_LIB)
+   check_library_exists(atomic __atomic_load_8 "" HAVE_CXX_LIBATOMICS64)
+diff -Naur llvm-3.9.0.src/include/llvm/ExecutionEngine/Orc/RPCUtils.h llvm-3.9.0.src.mousse/include/llvm/ExecutionEngine/Orc/RPCUtils.h
+--- llvm-3.9.0.src/include/llvm/ExecutionEngine/Orc/RPCUtils.h	2020-02-28 13:33:28.027419818 -0800
++++ llvm-3.9.0.src.mousse/include/llvm/ExecutionEngine/Orc/RPCUtils.h	2020-02-28 13:37:21.207576215 -0800
+@@ -159,11 +159,19 @@
+     template <typename ChannelT>
+     static Error readResult(ChannelT &C, std::promise<OptionalReturn> &P) {
+       // Void functions don't have anything to deserialize, so we're good.
+-      P.set_value(true);
++      //Yingtong start
++	assert(false && "llvm readResult failed\n");
++      //P.set_value(true);
++      //Yingtong end
+       return endReceiveMessage(C);
+     }
+ 
+-    static void abandon(std::promise<OptionalReturn> &P) { P.set_value(false); }
++    static void abandon(std::promise<OptionalReturn> &P) { 
++	//Yingtong start
++	assert(false && "llvm abandon failed\n");
++	//P.set_value(false);
++	//Yingtong end
++    }
+ 
+     template <typename ChannelT, typename SequenceNumberT>
+     static Error respond(ChannelT &C, SequenceNumberT SeqNo,
+diff -Naur llvm-3.9.0.src/include/llvm/Support/ThreadPool.h llvm-3.9.0.src.mousse/include/llvm/Support/ThreadPool.h
+--- llvm-3.9.0.src/include/llvm/Support/ThreadPool.h	2020-02-28 13:33:28.151419907 -0800
++++ llvm-3.9.0.src.mousse/include/llvm/Support/ThreadPool.h	2020-02-28 13:37:21.247576240 -0800
+@@ -15,7 +15,8 @@
+ #define LLVM_SUPPORT_THREAD_POOL_H
+ 
+ #include "llvm/Support/thread.h"
+-
++//Yingtong
++#include "llvm/Support/raw_ostream.h"
+ #ifdef _MSC_VER
+ // concrt.h depends on eh.h for __uncaught_exception declaration
+ // even if we disable exceptions.
+@@ -75,30 +76,38 @@
+   /// Asynchronous submission of a task to the pool. The returned future can be
+   /// used to wait for the task to finish and is *non-blocking* on destruction.
+   template <typename Function, typename... Args>
+-  inline std::shared_future<VoidTy> async(Function &&F, Args &&... ArgList) {
+-    auto Task =
+-        std::bind(std::forward<Function>(F), std::forward<Args>(ArgList)...);
+-#ifndef _MSC_VER
+-    return asyncImpl(std::move(Task));
+-#else
+-    // This lambda has to be marked mutable because MSVC 2013's std::bind call
+-    // operator isn't const qualified.
+-    return asyncImpl([Task](VoidTy) mutable -> VoidTy {
+-      Task();
+-      return VoidTy();
+-    });
+-#endif
++//Yingtong start
++//  inline std::shared_future<VoidTy> async(Function &&F, Args &&... ArgList) {
++  inline void async(Function &&F, Args &&... ArgList) {
++	assert(false && "llvm async failed!\n");
++//    auto Task =
++//        std::bind(std::forward<Function>(F), std::forward<Args>(ArgList)...);
++//#ifndef _MSC_VER
++//    return asyncImpl(std::move(Task));
++//#else
++//    // This lambda has to be marked mutable because MSVC 2013's std::bind call
++//    // operator isn't const qualified.
++//    return asyncImpl([Task](VoidTy) mutable -> VoidTy {
++//      Task();
++//      return VoidTy();
++//    });
++//#endif
++//Yingtong
+   }
+ 
+   /// Asynchronous submission of a task to the pool. The returned future can be
+   /// used to wait for the task to finish and is *non-blocking* on destruction.
+   template <typename Function>
+-  inline std::shared_future<VoidTy> async(Function &&F) {
+-#ifndef _MSC_VER
+-    return asyncImpl(std::forward<Function>(F));
+-#else
+-    return asyncImpl([F] (VoidTy) -> VoidTy { F(); return VoidTy(); });
+-#endif
++//Yingtong start
++//  inline std::shared_future<VoidTy> async(Function &&F) {
++  inline void async(Function &&F) {
++	assert(false && "llvm async failed!\n");
++//#ifndef _MSC_VER
++//    return asyncImpl(std::forward<Function>(F));
++//#else
++//    return asyncImpl([F] (VoidTy) -> VoidTy { F(); return VoidTy(); });
++//#endif
++//Yingtong end
+   }
+ 
+   /// Blocking wait for all the threads to complete and the queue to be empty.
+@@ -108,13 +117,15 @@
+ private:
+   /// Asynchronous submission of a task to the pool. The returned future can be
+   /// used to wait for the task to finish and is *non-blocking* on destruction.
+-  std::shared_future<VoidTy> asyncImpl(TaskTy F);
++	//Yingtong
++  ////std::shared_future<VoidTy> asyncImpl(TaskTy F);
+ 
+   /// Threads in flight
+   std::vector<llvm::thread> Threads;
+ 
+   /// Tasks waiting for execution in the pool.
+-  std::queue<PackagedTaskTy> Tasks;
++	//Yingtong 
++  ////std::queue<PackagedTaskTy> Tasks;
+ 
+   /// Locking and signaling for accessing the Tasks queue.
+   std::mutex QueueLock;
+diff -Naur llvm-3.9.0.src/lib/IR/Constants.cpp llvm-3.9.0.src.mousse/lib/IR/Constants.cpp
+--- llvm-3.9.0.src/lib/IR/Constants.cpp	2020-02-28 13:33:29.287420721 -0800
++++ llvm-3.9.0.src.mousse/lib/IR/Constants.cpp	2020-02-28 13:37:21.827576606 -0800
+@@ -31,6 +31,10 @@
+ #include "llvm/Support/raw_ostream.h"
+ #include <algorithm>
+ #include <cstdarg>
++//Yingtong start
++#include <llvm/Support/raw_os_ostream.h>
++#include <iostream>
++//Yingtong end
+ using namespace llvm;
+ 
+ //===----------------------------------------------------------------------===//
+@@ -580,9 +584,22 @@
+ }
+ 
+ Constant *ConstantInt::get(Type *Ty, const APInt& V) {
++//Yingtong
++   raw_os_ostream os(std::cerr);
+   ConstantInt *C = get(Ty->getContext(), V);
+-  assert(C->getType() == Ty->getScalarType() &&
+-         "ConstantInt type doesn't match the type implied by its value!");
++//Yingtong start
++//	C->print(os);
++//	os << "ConstantInt::get" << "\n";
++//	C->getType()->print(os);
++//	os << "\n";
++//	Ty->getScalarType()->print(os);
++//	os << "\n";
++//	if(C->getType() != Ty->getScalarType())
++//		os << "Yingtong error fixme\n";
++//	os.flush();	
++//  assert(C->getType() == Ty->getScalarType() &&
++//         "ConstantInt type doesn't match the type implied by its value!");
++//Yingtong end
+ 
+   // For vectors, broadcast the value.
+   if (VectorType *VTy = dyn_cast<VectorType>(Ty))
+diff -Naur llvm-3.9.0.src/lib/IR/Instructions.cpp llvm-3.9.0.src.mousse/lib/IR/Instructions.cpp
+--- llvm-3.9.0.src/lib/IR/Instructions.cpp	2020-02-28 13:33:29.295420727 -0800
++++ llvm-3.9.0.src.mousse/lib/IR/Instructions.cpp	2020-02-28 13:37:21.827576606 -0800
+@@ -24,6 +24,10 @@
+ #include "llvm/IR/Operator.h"
+ #include "llvm/Support/ErrorHandling.h"
+ #include "llvm/Support/MathExtras.h"
++//Yingtong start
++#include <llvm/Support/raw_os_ostream.h>
++#include <iostream>
++//Yingtong end
+ using namespace llvm;
+ 
+ //===----------------------------------------------------------------------===//
+@@ -247,20 +251,39 @@
+ 
+ void CallInst::init(FunctionType *FTy, Value *Func, ArrayRef<Value *> Args,
+                     ArrayRef<OperandBundleDef> Bundles, const Twine &NameStr) {
++
+   this->FTy = FTy;
+   assert(getNumOperands() == Args.size() + CountBundleInputs(Bundles) + 1 &&
+          "NumOperands not set up?");
+   Op<-1>() = Func;
+ 
+ #ifndef NDEBUG
++//Yingtong
++//raw_os_ostream os(std::cerr);
+   assert((Args.size() == FTy->getNumParams() ||
+           (FTy->isVarArg() && Args.size() > FTy->getNumParams())) &&
+          "Calling a function with bad signature!");
+-
+-  for (unsigned i = 0; i != Args.size(); ++i)
++//Yingtong
++//	fprintf(stderr, "%s [1]: FTy->isVarArg() = %d, FTy->getNumParams() = %d, Args.size() = %d\n", __FUNCTION__, FTy->isVarArg(), FTy->getNumParams(), Args.size());
++//	Func->print(os);
++//	os << "\n";
++  for (unsigned i = 0; i != Args.size(); ++i) 
++//Yingtong start
++{
++//	if(!FTy->isVarArg()) {
++//		os << i << ":\n";
++//		FTy->getParamType(i)->print(os);
++//		os << "\n";
++//		Args[i]->getType()->print(os);	
++//		os << "\n";
++//		os.flush();
++//	}
++//Yingtong end
+     assert((i >= FTy->getNumParams() || 
+             FTy->getParamType(i) == Args[i]->getType()) &&
+            "Calling a function with a bad signature!");
++//Yingtong
++}
+ #endif
+ 
+   std::copy(Args.begin(), Args.end(), op_begin());
+diff -Naur llvm-3.9.0.src/lib/Support/CMakeLists.txt llvm-3.9.0.src.mousse/lib/Support/CMakeLists.txt
+--- llvm-3.9.0.src/lib/Support/CMakeLists.txt	2020-02-28 13:33:29.331420753 -0800
++++ llvm-3.9.0.src.mousse/lib/Support/CMakeLists.txt	2020-02-28 13:37:21.839576614 -0800
+@@ -26,6 +26,8 @@
+   endif()
+ endif( MSVC OR MINGW )
+ 
++set(system_libs ${system_libs})
++
+ add_llvm_library(LLVMSupport
+   APFloat.cpp
+   APInt.cpp
+diff -Naur llvm-3.9.0.src/lib/Support/Host.cpp llvm-3.9.0.src.mousse/lib/Support/Host.cpp
+--- llvm-3.9.0.src/lib/Support/Host.cpp	2020-02-28 13:33:29.323420747 -0800
++++ llvm-3.9.0.src.mousse/lib/Support/Host.cpp	2020-02-28 13:37:21.835576611 -0800
+@@ -1331,7 +1331,12 @@
+ #endif
+ 
+ std::string sys::getProcessTriple() {
+-  Triple PT(Triple::normalize(LLVM_HOST_TRIPLE));
++//Yingtong start
++/* This is a hack to create arm TargetMachine. The Triple we get from LLVM_HOST_TRIPLE is i386-unknown-linux-gnu, which is not arm target triple. The switch for -march is not working somehow. Here we set Arch to arm explicitly. Correct way should be using -march switch. FIXME*/
++
++//  Triple PT(Triple::normalize(LLVM_HOST_TRIPLE));
++  Triple PT(Triple::normalize("arm-linux-androideabi"));
++//Yingtong end
+ 
+   if (sizeof(void *) == 8 && PT.isArch32Bit())
+     PT = PT.get64BitArchVariant();
+diff -Naur llvm-3.9.0.src/lib/Support/ThreadPool.cpp llvm-3.9.0.src.mousse/lib/Support/ThreadPool.cpp
+--- llvm-3.9.0.src/lib/Support/ThreadPool.cpp	2020-02-28 13:33:29.327420750 -0800
++++ llvm-3.9.0.src.mousse/lib/Support/ThreadPool.cpp	2020-02-28 13:37:21.839576614 -0800
+@@ -27,78 +27,85 @@
+     : ActiveThreads(0), EnableFlag(true) {
+   // Create ThreadCount threads that will loop forever, wait on QueueCondition
+   // for tasks to be queued or the Pool to be destroyed.
+-  Threads.reserve(ThreadCount);
+-  for (unsigned ThreadID = 0; ThreadID < ThreadCount; ++ThreadID) {
+-    Threads.emplace_back([&] {
+-      while (true) {
+-        PackagedTaskTy Task;
+-        {
+-          std::unique_lock<std::mutex> LockGuard(QueueLock);
+-          // Wait for tasks to be pushed in the queue
+-          QueueCondition.wait(LockGuard,
+-                              [&] { return !EnableFlag || !Tasks.empty(); });
+-          // Exit condition
+-          if (!EnableFlag && Tasks.empty())
+-            return;
+-          // Yeah, we have a task, grab it and release the lock on the queue
+-
+-          // We first need to signal that we are active before popping the queue
+-          // in order for wait() to properly detect that even if the queue is
+-          // empty, there is still a task in flight.
+-          {
+-            ++ActiveThreads;
+-            std::unique_lock<std::mutex> LockGuard(CompletionLock);
+-          }
+-          Task = std::move(Tasks.front());
+-          Tasks.pop();
+-        }
+-        // Run the task we just grabbed
+-#ifndef _MSC_VER
+-        Task();
+-#else
+-        Task(/* unused */ false);
+-#endif
+-
+-        {
+-          // Adjust `ActiveThreads`, in case someone waits on ThreadPool::wait()
+-          std::unique_lock<std::mutex> LockGuard(CompletionLock);
+-          --ActiveThreads;
+-        }
+-
+-        // Notify task completion, in case someone waits on ThreadPool::wait()
+-        CompletionCondition.notify_all();
+-      }
+-    });
+-  }
++	//Yingtong start
++	errs() << "llvm ThreadPool failed!\n";
++//  Threads.reserve(ThreadCount);
++//  for (unsigned ThreadID = 0; ThreadID < ThreadCount; ++ThreadID) {
++//    Threads.emplace_back([&] {
++//     while (true) {	
++//        PackagedTaskTy Task;
++//        {
++//          std::unique_lock<std::mutex> LockGuard(QueueLock);
++//          // Wait for tasks to be pushed in the queue
++//          QueueCondition.wait(LockGuard,
++//                              [&] { return !EnableFlag || !Tasks.empty(); });
++//          // Exit condition
++//          if (!EnableFlag && Tasks.empty())
++//            return;
++//          // Yeah, we have a task, grab it and release the lock on the queue
++//
++//          // We first need to signal that we are active before popping the queue
++//          // in order for wait() to properly detect that even if the queue is
++//          // empty, there is still a task in flight.
++//          {
++//            ++ActiveThreads;
++//            std::unique_lock<std::mutex> LockGuard(CompletionLock);
++//          }
++//          Task = std::move(Tasks.front());
++//          Tasks.pop();
++//        }
++//        // Run the task we just grabbed
++//#ifndef _MSC_VER
++//        Task();
++//#else
++//        Task(/* unused */ false);
++//#endif
++//
++//        {
++//          // Adjust `ActiveThreads`, in case someone waits on ThreadPool::wait()
++//          std::unique_lock<std::mutex> LockGuard(CompletionLock);
++//          --ActiveThreads;
++//        }
++//
++//        // Notify task completion, in case someone waits on ThreadPool::wait()
++//        CompletionCondition.notify_all();
++//      }
++//    });
++//  }
++//Yingtong end
+ }
+ 
+ void ThreadPool::wait() {
+-  // Wait for all threads to complete and the queue to be empty
+-  std::unique_lock<std::mutex> LockGuard(CompletionLock);
+-  // The order of the checks for ActiveThreads and Tasks.empty() matters because
+-  // any active threads might be modifying the Tasks queue, and this would be a
+-  // race.
+-  CompletionCondition.wait(LockGuard,
+-                           [&] { return !ActiveThreads && Tasks.empty(); });
+-}
+-
+-std::shared_future<ThreadPool::VoidTy> ThreadPool::asyncImpl(TaskTy Task) {
+-  /// Wrap the Task in a packaged_task to return a future object.
+-  PackagedTaskTy PackagedTask(std::move(Task));
+-  auto Future = PackagedTask.get_future();
+-  {
+-    // Lock the queue and push the new task
+-    std::unique_lock<std::mutex> LockGuard(QueueLock);
+-
+-    // Don't allow enqueueing after disabling the pool
+-    assert(EnableFlag && "Queuing a thread during ThreadPool destruction");
+-
+-    Tasks.push(std::move(PackagedTask));
+-  }
+-  QueueCondition.notify_one();
+-  return Future.share();
+-}
+-
++//Yingtong start
++//  // Wait for all threads to complete and the queue to be empty
++//  std::unique_lock<std::mutex> LockGuard(CompletionLock);
++//  // The order of the checks for ActiveThreads and Tasks.empty() matters because
++//  // any active threads might be modifying the Tasks queue, and this would be a
++//  // race.
++//  CompletionCondition.wait(LockGuard,
++//                           [&] { return !ActiveThreads && Tasks.empty(); });
++//Yingtong end
++}
++
++//Yingtong start
++//std::shared_future<ThreadPool::VoidTy> ThreadPool::asyncImpl(TaskTy Task) {
++//  /// Wrap the Task in a packaged_task to return a future object.
++//  PackagedTaskTy PackagedTask(std::move(Task));
++//  auto Future = PackagedTask.get_future();
++//  {
++//    // Lock the queue and push the new task
++//    std::unique_lock<std::mutex> LockGuard(QueueLock);
++//
++//    // Don't allow enqueueing after disabling the pool
++//    assert(EnableFlag && "Queuing a thread during ThreadPool destruction");
++//
++//    Tasks.push(std::move(PackagedTask));
++//  }
++//  QueueCondition.notify_one();
++//  return Future.share();
++//}
++//
++//Yingtong end
+ // The destructor joins all threads, waiting for completion.
+ ThreadPool::~ThreadPool() {
+   {
+@@ -124,33 +131,36 @@
+ }
+ 
+ void ThreadPool::wait() {
++//Yingtong start
++    errs() << "ThreadPool::wait not implemented\n";
+   // Sequential implementation running the tasks
+-  while (!Tasks.empty()) {
+-    auto Task = std::move(Tasks.front());
+-    Tasks.pop();
+-#ifndef _MSC_VER
+-        Task();
+-#else
+-        Task(/* unused */ false);
+-#endif
+-  }
+-}
+-
+-std::shared_future<ThreadPool::VoidTy> ThreadPool::asyncImpl(TaskTy Task) {
+-#ifndef _MSC_VER
+-  // Get a Future with launch::deferred execution using std::async
+-  auto Future = std::async(std::launch::deferred, std::move(Task)).share();
+-  // Wrap the future so that both ThreadPool::wait() can operate and the
+-  // returned future can be sync'ed on.
+-  PackagedTaskTy PackagedTask([Future]() { Future.get(); });
+-#else
+-  auto Future = std::async(std::launch::deferred, std::move(Task), false).share();
+-  PackagedTaskTy PackagedTask([Future](bool) -> bool { Future.get(); return false; });
+-#endif
+-  Tasks.push(std::move(PackagedTask));
+-  return Future;
+-}
+-
++//  while (!Tasks.empty()) {
++//    auto Task = std::move(Tasks.front());
++//    Tasks.pop();
++//#ifndef _MSC_VER
++//        Task();
++//#else
++//        Task(/* unused */ false);
++//#endif
++//  }
++//Yingtong end
++}
++//Yingtong start
++//std::shared_future<ThreadPool::VoidTy> ThreadPool::asyncImpl(TaskTy Task) {
++//#ifndef _MSC_VER
++//  // Get a Future with launch::deferred execution using std::async
++//  auto Future = std::async(std::launch::deferred, std::move(Task)).share();
++//  // Wrap the future so that both ThreadPool::wait() can operate and the
++//  // returned future can be sync'ed on.
++//  PackagedTaskTy PackagedTask([Future]() { Future.get(); });
++//#else
++//  auto Future = std::async(std::launch::deferred, std::move(Task), false).share();
++//  PackagedTaskTy PackagedTask([Future](bool) -> bool { Future.get(); return false; });
++//#endif
++//  Tasks.push(std::move(PackagedTask));
++//  return Future;
++//}
++//Yingtong end
+ ThreadPool::~ThreadPool() {
+   wait();
+ }
+diff -Naur llvm-3.9.0.src/tools/lli/ChildTarget/ChildTarget.cpp llvm-3.9.0.src.mousse/tools/lli/ChildTarget/ChildTarget.cpp
+--- llvm-3.9.0.src/tools/lli/ChildTarget/ChildTarget.cpp	2020-02-28 13:33:29.355420769 -0800
++++ llvm-3.9.0.src.mousse/tools/lli/ChildTarget/ChildTarget.cpp	2020-02-28 13:37:21.847576619 -0800
+@@ -66,7 +66,10 @@
+       ExitOnErr(Server.handleTerminateSession());
+       return 0;
+     default:
+-      ExitOnErr(Server.handleKnownFunction(Id));
++	//Yingtong start
++	assert(false && "llvm error\n");
++    //  ExitOnErr(Server.handleKnownFunction(Id));
++	//Yingtong end
+       break;
+     }
+   }
+diff -Naur llvm-3.9.0.src/tools/sancov/sancov.cc llvm-3.9.0.src.mousse/tools/sancov/sancov.cc
+--- llvm-3.9.0.src/tools/sancov/sancov.cc	2020-02-28 13:33:29.359420773 -0800
++++ llvm-3.9.0.src.mousse/tools/sancov/sancov.cc	2020-02-28 13:37:21.851576622 -0800
+@@ -52,7 +52,18 @@
+ #include <string>
+ #include <utility>
+ #include <vector>
+-
++//Yingtong start
++#include <sstream>
++namespace patch
++{
++    template < typename T > std::string to_string( const T& n )
++    {
++        std::ostringstream stm ;
++        stm << n ;
++        return stm.str() ;
++    }
++}
++//Yingtong end
+ using namespace llvm;
+ 
+ namespace {
+@@ -511,8 +522,10 @@
+ // Leading zeroes help locate 000% coverage.
+ static std::string formatHtmlPct(size_t Pct) {
+   Pct = std::max(std::size_t{0}, std::min(std::size_t{100}, Pct));
+-
+-  std::string Num = std::to_string(Pct);
++//Yingtong start
++  ////std::string Num = std::to_string(Pct);
++  std::string Num = patch::to_string(Pct);
++//Yingtong end
+   std::string Zeroes(3 - Num.size(), '0');
+   if (!Zeroes.empty())
+     Zeroes = "<span class='lz'>" + Zeroes + "</span>";
