@@ -29,7 +29,7 @@ make -j36 -f ${MOUSSE_SRC}/Makefile all-debug
 mkdir qemu-debug
 cd qemu-debug
 
-export LDFLAGS="-lm -fPIE -pie -Wl,--export-dynamic-symbol -Wl,qemu_coroutine_create -Wl,--export-dynamic-symbol -Wl,qemu_coroutine_enter -Wl,--export-dynamic-symbol -Wl,qemu_coroutine_yield -Wl,--export-dynamic-symbol -Wl,mmap_next_start -Wl,--export-dynamic-symbol -Wl,user_kvm_cpu_exec -Wl,--export-dynamic-symbol -Wl,qemu_uname_release -Wl,--export-dynamic-symbol -Wl,exec_path -Wl,--export-dynamic-symbol -Wl,afl_entry_point -Wl,--export-dynamic-symbol -Wl,afl_start_code -Wl,--export-dynamic-symbol -Wl,afl_end_code" 
+export LDFLAGS="-lm -fPIE -pie -Wl,--export-dynamic-symbol -Wl,qemu_coroutine_create -Wl,--export-dynamic-symbol -Wl,qemu_coroutine_enter -Wl,--export-dynamic-symbol -Wl,qemu_coroutine_yield -Wl,--export-dynamic-symbol -Wl,mmap_next_start -Wl,--export-dynamic-symbol -Wl,user_kvm_cpu_exec -Wl,--export-dynamic-symbol -Wl,qemu_uname_release -Wl,--export-dynamic-symbol -Wl,exec_path" 
 
 $QEMUSRC/configure --prefix="$SYSROOT/usr" --cpu="arm" --target-list=arm-linux-user --disable-system --disable-bsd-user --disable-zlib-test --disable-guest-agent --disable-docs --disable-seccomp
 make -j60
