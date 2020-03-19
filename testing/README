@@ -1,0 +1,54 @@
+*****For detailed mousse.sh usage*****
+   $ ./mousse.sh -h
+
+*****Coverage plugin:*****
+   a. Open ghidra, create a project, import all the binaries of interest
+      and finish the analysis
+
+   b. Create a script to extract basic blocks
+      In ghidra, <Window> -> <Script Manager> -> <Create New Script>
+      and copy the content of mousse_scripts/ghidra_extract_bbs.py
+
+   c. In the main window, switch between binaries and run the script
+      The output file will be named xxx.bbs and stored at your ghidra root
+      directory.
+
+   d. Move all .bbs files to ~/Mousse/mousse_testing/target_xxx/basic_blocks
+
+*****Test Audio Provider in pixel 3*****
+**The way we test Audio Provider is by intercepting the APIs in /vendor/bin/hw/android.hardware.audio@2.0-service. More specifically, adding s2e_make_concolic at the begining and s2e_kill_state before the API returns. This is the defualt setting of DistributedExecution for Audio Provider testing.
+**Before you test Audio Provider, you need to stop the two services by running the two commands in the device: stop audioserver, stop vendor.audio-hal-2-0 
+add_plugin("DistributedExecution")
+pluginsConfig.DistributedExecution = {
+    logLevel = "debug",
+    forkLimiterThreshold = 10,
+    initAddress = 0x100,
+    cameraProviderTestCode= -1;
+    
+    testAudioProvider = true,
+    testAudioServer = false,
+    blockingIoctlFiles = {"/dev/hwbinder",},
+    blockingIoctlThreshold = 60,
+    blockingIoctlDetection = true,
+
+    rebootAfterTerminate = true,
+    offloadThreshold = 9,
+    statesForkedOnConcretization = 1,
+    stateExecutionThreshold = 3600,
+    makeSyscallReturnConcolic = false,
+    makeEnvReturnConcolic = false,
+    syscalls = {
+        stateRevealing = {3,145},
+        stateModifying ={54, 4, 146},
+        checkFd = {4, 54, 3, 145, 146},
+        makeReturnConcolic = {4, 54, 3, 145, 146},
+        stateModifyingIoctlFiles = {"/dev/hwbinder","/dev/vndbinder","/dev/diag","/dev/ion", "/dev/snd/hwC0D1000", "/dev/snd/controlC0", "/dev/snd/pcmC0D41c", "/dev/snd/pcmC0D13p", "/dev/ashmem","/dev/msm_cirrus_playback","/dev/msm_audio_cal", "/dev/wcd_dsp0_control", "/dev/wcd-dsp-glink", "/dev/msm_rtac", "/dev/snd/pcmC0D17p"},
+        EnvIoctlFiles = {"/dev/hwbinder","/dev/vndbinder","/dev/diag","/dev/ion", "/dev/snd/hwC0D1000", "/dev/snd/controlC0", "/dev/snd/pcmC0D41c", "/dev/snd/pcmC0D13p", "/dev/ashmem","/dev/msm_cirrus_playback","/dev/msm_audio_cal", "/dev/wcd_dsp0_control", "/dev/wcd-dsp-glink", "/dev/msm_rtac", "/dev/snd/pcmC0D17p"},
+    },
+
+    noForkingFiles = {
+    },
+    portNum = 8000,
+    legacyMode = true,
+    standaloneMode = false,
+}

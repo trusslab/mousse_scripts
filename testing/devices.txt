@@ -1,0 +1,5 @@
+#This is a sample. delete '#' when adding real device ID
+#device ID1
+#device ID2
+8AGX0SMUR
+89AX07H4R
