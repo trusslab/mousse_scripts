@@ -13,7 +13,7 @@ android_id_file="android_id.txt"
 mousse_executor_script=execute.sh
 mousse_root=~/Mousse
 mousse_deps=${mousse_root}/mousse_dependencies
-mousse_build=${mousse_root}/cross_build_mousse
+mousse_build=${mousse_root}/mousse_build
 parallel_opts="--no-notice --line-buffer --tag -q"
 # Default Options
 devices=""
